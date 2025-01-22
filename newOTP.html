@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WasteFlip - Payment</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="payment-style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="body-ct">
+        <div class="title">WasteFlip</div>
+        <div class="form-ct">
+            <div class="otp-text">
+                <h2>Enter OTP</h2>
+                <p>Please enter the OTP sent to your registered mobile number.</p>
+            </div>
+            <form class="otp-ct">
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 1" tabindex="1">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2" tabindex="2">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3" tabindex="3">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4" tabindex="4">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 5" tabindex="5">
+                    <input type="text" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 6" tabindex="6">
+                </div>
+                <div class="resend-container">
+                    <p>Didn’t receive the OTP? <a href="#" id="resend-otp">Resend OTP</a></p>
+                </div>
+                <button type="submit" class="verify-btn" disabled>Verify OTP</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Automatically focus the next input when a digit is entered
+        $(".otp-inputs input").on("keyup", function (e) {
+            const currentInput = $(this);
+            const value = currentInput.val();
+            const maxLength = this.maxLength;
+
+            // Focus next input on entering a digit
+            if (value.length === maxLength && e.key !== "Backspace") {
+                currentInput.next("input").focus();
+            }
+
+            // Enable "Verify OTP" button only when all fields are filled
+            const allFilled = $(".otp-inputs input").toArray().every(input => $(input).val().length > 0);
+            $(".verify-btn").prop("disabled", !allFilled);
+        });
+
+        // Backspace/delete functionality
+        $(".otp-inputs input").on("keydown", function (e) {
+            const currentInput = $(this);
+
+            if (e.key === "Backspace" && currentInput.val() === "") {
+                currentInput.prev("input").focus(); // Move focus to the previous input if empty
+            }
+        });
+
+        // Countdown Timer for Resend OTP
+        function startResendTimer() {
+            let timer = 30; // Countdown from 30 seconds
+            const resendLink = $("#resend-otp");
+
+            resendLink.text(`Resend OTP (${timer}s)`);
+            resendLink.prop("disabled", true);
+
+            const interval = setInterval(() => {
+                timer--;
+                resendLink.text(`Resend OTP (${timer}s)`);
+                if (timer <= 0) {
+                    clearInterval(interval);
+                    resendLink.text("Resend OTP");
+                    resendLink.prop("disabled", false);
+                }
+            }, 1000);
+        }
+
+        // Handle Resend OTP action using AJAX with JSON
+        $("#resend-otp").on("click", function (e) {
+            e.preventDefault();
+
+            const userEmail = "user@example.com";  // Replace with actual email or get it dynamically
+
+            $.ajax({
+                url: "/resend-otp",  // Backend endpoint for resending OTP
+                method: "POST",      // Send data via POST request
+                contentType: "application/json",  // Set the content type to JSON
+                data: JSON.stringify({ email: userEmail }),  // Send the email as JSON
+                beforeSend: function () {
+                    startResendTimer(); // Start timer before sending the request
+                },
+                success: function (response) {
+                    alert(response.message);  // Show the message returned from the server
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert("Error resending OTP: " + textStatus);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
